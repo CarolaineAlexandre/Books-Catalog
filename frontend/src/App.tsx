@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useEffect, useState } from 'react';
+import './App.css';
 
-interface Book {
+interface Livro {
   _id: string;
   titulo: string;
   autor: string;
@@ -11,52 +11,105 @@ interface Book {
   valor: number;
 }
 
-function BookList() {
-  const [books, setBooks] = useState<Book[]>([]);
-  const [pageNumber, setPageNumber] = useState(1);
-  const [pageSize] = useState(5);
+function App() {
+  const [livros, setLivros] = useState<Livro[]>([]);
+  const [pageTotal, setPageTotal] = useState(0);
+  const [amount, setAmount] = useState(0);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
-    async function fetchBooks() {
-      try {
-        const response = await axios.get(`http://127.0.0.1:8000/api/catalogoLivros`, {
-          params: {
-            pageNumber: pageNumber,
-            pageSize: pageSize
-          }
-        });
-        console.log(response);
-        if (response.status !== 200) {
-          throw new Error('Erro ao carregar os livros');
-        }
-        setBooks(response.data);
-      } catch (error) {
-        console.error('Erro ao carregar os livros:', error);
-      }
+    async function fetchData() {
+      await getAmount();
+      getLivros(page);
     }
+    fetchData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
 
-    fetchBooks();
-  }, [pageNumber, pageSize]);
+  async function getLivros(page: number) {
+    try {
+      const response = await fetch(`http://localhost:3001/livros/${page}`);
+      console.log(response)
+      if (response.ok) {
+        const data = await response.json();
+        setLivros(data);
+      } else {
+        setLivros([]);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar livros:", error);
+    }
+  }
+
+  async function getAmount() {
+    try {
+      const response = await fetch(`http://localhost:3001/len`);
+      if (response.ok) {
+        const data = await response.json();
+        setAmount(data.amount);
+        countPages(data.amount);
+      } else {
+        setAmount(0);
+      }
+    } catch (error) {
+      console.error("Erro ao contar documentos:", error);
+    }
+  }
+
+  function countPages(amount: number) {
+    const numberOfPages = Math.ceil(amount / 10);
+    setPageTotal(numberOfPages);
+  }
+
+  function handlePage(value: number) {
+    setPage(value);
+  }
 
   return (
-    <div className="book-list">
-      {books.map(book => (
-        <div key={book._id} className="book-item">
-          <h3>{book.titulo}</h3>
-          <p>Autor: {book.autor}</p>
-          <p>ISBN: {book.isbn}</p>
-          <p>Páginas: {book.paginas}</p>
-          <p>Ano: {book.ano}</p>
-          <p>Valor: {book.valor}</p>
+    <div className="App">
+      <header className="App-header">
+        <h1>Catálogo de Livros</h1>
+        <table>
+          <thead>
+            <tr>
+              <th>Titulo</th>
+              <th>Autor</th>
+              <th>ISBN</th>
+              <th>Páginas</th>
+              <th>Ano</th>
+              <th>Valor</th>
+            </tr>
+          </thead>
+          <tbody>
+            {livros.map((livro: Livro) => (
+              <tr key={livro._id}>
+                <td>{livro.titulo}</td>
+                <td>{livro.autor}</td>
+                <td>{livro.isbn}</td>
+                <td>{livro.paginas}</td>
+                <td>{livro.ano}</td>
+                <td>{livro.valor}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div>
+          {pageTotal > 0 && (
+            <div>
+              Exibindo de {((page - 1) * 10) + 1} até {(page * 10 > amount) ? amount : (page * 10)} de {amount} livros
+            </div>
+          )}
+          <button disabled={page <= 1} onClick={() => setPage(1)}>{'<<'}</button>
+          <button disabled={page <= 1} onClick={() => setPage(page - 1)}>{'<'}</button>
+          {Array.from({ length: Math.min(pageTotal, 7) }, (_, i) => i + 1).map(num => (
+            <button key={num} onClick={() => handlePage(num)} style={{ backgroundColor: num === page ? 'blue' : '' }}>{num}</button>
+          ))}
+          <button disabled={page >= pageTotal} onClick={() => setPage(page + 1)}>{'>'}</button>
+          <button disabled={page >= pageTotal} onClick={() => setPage(pageTotal)}>{'>>'}</button>
         </div>
-      ))}
-      <div className="pagination">
-        <button onClick={() => setPageNumber(prevPage => prevPage - 1)}>Anterior</button>
-        <span>{pageNumber}</span>
-        <button onClick={() => setPageNumber(prevPage => prevPage + 1)}>Próxima</button>
-      </div>
+      </header>
     </div>
   );
 }
 
-export default BookList;
+export default App;
