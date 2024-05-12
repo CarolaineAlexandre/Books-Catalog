@@ -41,7 +41,7 @@ app.get('/livros/:page', async (req, res) => {
         console.error("Erro ao buscar livros:", error);
         res.status(500).json({ error: 'Erro ao buscar livros' });
     }
-});
+});8
 
 app.get('/len', async (req, res) => {
     try {
