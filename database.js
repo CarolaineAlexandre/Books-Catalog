@@ -41,7 +41,7 @@ app.get('/livros/:page', async (req, res) => {
         console.error("Erro ao buscar livros:", error);
         res.status(500).json({ error: 'Erro ao buscar livros' });
     }
-});8
+});
 
 app.get('/len', async (req, res) => {
     try {
@@ -54,7 +54,6 @@ app.get('/len', async (req, res) => {
     }
 });
 
-// Start the server
 app.listen(port, () => {
     console.log(`Servidor está rodando na porta ${port}`);
 });
