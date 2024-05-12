@@ -65,6 +65,23 @@ function App() {
     setPage(value);
   }
 
+  function renderPageNumbers() {
+    const totalPagesToShow = Math.min(pageTotal, 7);
+    const pageNumbers = [];
+    const startPage = Math.max(1, page - Math.floor(totalPagesToShow / 2));
+    const endPage = Math.min(pageTotal, startPage + totalPagesToShow - 1);
+
+    for (let i = startPage; i <= endPage; i++) {
+      pageNumbers.push(
+        <button key={i} onClick={() => handlePage(i)} style={{ backgroundColor: i === page ? 'blue' : '' }}>
+          {i}
+        </button>
+      );
+    }
+
+    return pageNumbers;
+  }
+
   return (
     <div className="App">
       <header className="App-header">
@@ -101,9 +118,7 @@ function App() {
           )}
           <button disabled={page <= 1} onClick={() => setPage(1)}>{'<<'}</button>
           <button disabled={page <= 1} onClick={() => setPage(page - 1)}>{'<'}</button>
-          {Array.from({ length: Math.min(pageTotal, 7) }, (_, i) => i + 1).map(num => (
-            <button key={num} onClick={() => handlePage(num)} style={{ backgroundColor: num === page ? 'blue' : '' }}>{num}</button>
-          ))}
+          {renderPageNumbers()}
           <button disabled={page >= pageTotal} onClick={() => setPage(page + 1)}>{'>'}</button>
           <button disabled={page >= pageTotal} onClick={() => setPage(pageTotal)}>{'>>'}</button>
         </div>
