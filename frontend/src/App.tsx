@@ -15,21 +15,19 @@ function App() {
   const [livros, setLivros] = useState<Livro[]>([]);
   const [pageTotal, setPageTotal] = useState(0);
   const [amount, setAmount] = useState(0);
-  const [page, setPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     async function fetchData() {
       await getAmount();
-      getLivros(page);
+      await getLivros(currentPage);
     }
     fetchData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, [currentPage]);
 
   async function getLivros(page: number) {
     try {
       const response = await fetch(`http://localhost:3001/livros/${page}`);
-      console.log(response)
       if (response.ok) {
         const data = await response.json();
         setLivros(data);
@@ -47,7 +45,7 @@ function App() {
       if (response.ok) {
         const data = await response.json();
         setAmount(data.amount);
-        countPages(data.amount);
+        setPageTotal(Math.ceil(data.amount / 10));
       } else {
         setAmount(0);
       }
@@ -56,30 +54,36 @@ function App() {
     }
   }
 
-  function countPages(amount: number) {
-    const numberOfPages = Math.ceil(amount / 10);
-    setPageTotal(numberOfPages);
+  function handlePageChange(value: number) {
+    setCurrentPage(value);
   }
 
-  function handlePage(value: number) {
-    setPage(value);
-  }
-
-  function renderPageNumbers() {
-    const totalPagesToShow = Math.min(pageTotal, 7);
-    const pageNumbers = [];
-    const startPage = Math.max(1, page - Math.floor(totalPagesToShow / 2));
-    const endPage = Math.min(pageTotal, startPage + totalPagesToShow - 1);
+  function renderPagination() {
+    const pages = [];
+    const startPage = Math.max(1, currentPage - 3);
+    const endPage = Math.min(pageTotal, currentPage + 3);
 
     for (let i = startPage; i <= endPage; i++) {
-      pageNumbers.push(
-        <button key={i} onClick={() => handlePage(i)} style={{ backgroundColor: i === page ? 'blue' : '' }}>
+      pages.push(
+        <button
+          key={i}
+          className={`page-button ${i === currentPage ? 'active' : ''}`}
+          onClick={() => handlePageChange(i)}
+        >
           {i}
         </button>
       );
     }
 
-    return pageNumbers;
+    return (
+      <div className="pagination">
+        <button disabled={currentPage === 1} onClick={() => handlePageChange(1)}>{'<<'}</button>
+        <button disabled={currentPage === 1} onClick={() => handlePageChange(currentPage - 1)}>{'<'}</button>
+        {pages}
+        <button disabled={currentPage === pageTotal} onClick={() => handlePageChange(currentPage + 1)}>{'>'}</button>
+        <button disabled={currentPage === pageTotal} onClick={() => handlePageChange(pageTotal)}>{'>>'}</button>
+      </div>
+    );
   }
 
   return (
@@ -89,7 +93,7 @@ function App() {
         <table>
           <thead>
             <tr>
-              <th>Titulo</th>
+              <th>Título</th>
               <th>Autor</th>
               <th>ISBN</th>
               <th>Páginas</th>
@@ -98,30 +102,22 @@ function App() {
             </tr>
           </thead>
           <tbody>
-            {livros.map((livro: Livro) => (
+            {livros.map((livro) => (
               <tr key={livro._id}>
                 <td>{livro.titulo}</td>
                 <td>{livro.autor}</td>
                 <td>{livro.isbn}</td>
                 <td>{livro.paginas}</td>
                 <td>{livro.ano}</td>
-                <td>{livro.valor}</td>
+                <td>R$ {livro.valor}</td>
               </tr>
             ))}
           </tbody>
         </table>
         <div>
-          {pageTotal > 0 && (
-            <div>
-              Exibindo de {((page - 1) * 10) + 1} até {(page * 10 > amount) ? amount : (page * 10)} de {amount} livros
-            </div>
-          )}
-          <button disabled={page <= 1} onClick={() => setPage(1)}>{'<<'}</button>
-          <button disabled={page <= 1} onClick={() => setPage(page - 1)}>{'<'}</button>
-          {renderPageNumbers()}
-          <button disabled={page >= pageTotal} onClick={() => setPage(page + 1)}>{'>'}</button>
-          <button disabled={page >= pageTotal} onClick={() => setPage(pageTotal)}>{'>>'}</button>
+          {currentPage * 10 - 9} - {Math.min(currentPage * 10, amount)} de {amount} livros
         </div>
+        {renderPagination()}
       </header>
     </div>
   );
